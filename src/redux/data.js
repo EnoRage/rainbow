@@ -356,15 +356,14 @@ export const dataResetState = () => (dispatch, getState) => {
   dispatch({ type: DATA_CLEAR_STATE });
 };
 
-// TODO JIN - assets needs to be a map
-export const dataUpdateAssets = assets => (dispatch, getState) => {
+export const dataUpdateAssets = assetsData => (dispatch, getState) => {
   const { accountAddress, network } = getState().settings;
-  if (assets.length) {
-    saveAccountAssetsData(assets, accountAddress, network);
+  if (!isEmpty(assetsData)) {
+    saveAccountAssetsData(assetsData, accountAddress, network);
     // Change the state since the account isn't empty anymore
     saveAccountEmptyState(false, accountAddress, network);
     dispatch({
-      payload: assets,
+      payload: assetsData,
       type: DATA_UPDATE_ACCOUNT_ASSETS_DATA,
     });
   }
