@@ -557,6 +557,7 @@ export const addressAssetsReceived = (
     );
   }
 
+  // TODO JIN
   const { assets: existingAssets } = getState().data;
   if (append || change || removed) {
     parsedAssets = uniqBy(
@@ -565,6 +566,7 @@ export const addressAssetsReceived = (
     );
   } else if (isL2) {
     // We need to replace all the assets for that network completely
+    // TODO JIN
     const { assets: existingAssets } = getState().data;
     const restOfTheAssets = existingAssets.filter(
       asset => asset.network !== assetsNetwork
@@ -574,6 +576,7 @@ export const addressAssetsReceived = (
   } else {
     // We need to merge the response with all l2 assets
     // to prevent L2 assets temporarily dissapearing
+    // TODO JIN
     const { assets: existingAssets } = getState().data;
     const l2Assets = existingAssets.filter(asset => isL2Asset(asset.type));
     parsedAssets = uniqBy(

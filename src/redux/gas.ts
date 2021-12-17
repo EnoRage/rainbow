@@ -268,6 +268,7 @@ export const gasUpdateToCustomGasFee = (gasParams: GasFeeParams) => async (
     confirmationTimeByPriorityFee,
   } = getState().gas;
 
+  // TODO JIN
   const { assets } = getState().data;
   const { nativeCurrency } = getState().settings;
   const _gasLimit = gasLimit || getDefaultGasLimit(txNetwork, defaultGasLimit);
@@ -413,6 +414,7 @@ export const gasPricesStartPolling = (network = Network.mainnet) => async (
               currentBlockParams,
               l1GasFeeOptimism,
             } = getState().gas;
+            // TODO JIN
             const { assets } = getState().data;
             const { nativeCurrency } = getState().settings;
             const isL2 = isL2Network(network);
@@ -581,6 +583,7 @@ export const gasUpdateGasFeeOption = (
     } = getState().gas;
     if (oldSelectedFee.option === newGasPriceOption) return;
 
+    // TODO JIN
     const { assets } = getState().data;
 
     const gasPriceOption = newGasPriceOption || NORMAL;
@@ -623,6 +626,7 @@ export const gasUpdateTxFee = (
       txNetwork,
       currentBlockParams,
     } = getState().gas;
+    // TODO JIN
     const { assets } = getState().data;
     const { nativeCurrency } = getState().settings;
     if (

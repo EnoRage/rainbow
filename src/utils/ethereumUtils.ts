@@ -111,6 +111,7 @@ const getNativeAssetForNetwork = async (
   const nativeAssetAddress = getNativeAssetAddressForNetwork(network);
   const { accountAddress } = store.getState().settings;
   let differentWallet = toLower(address) !== toLower(accountAddress);
+  // TODO JIN
   const { assets } = store.getState().data;
   let nativeAsset =
     (!differentWallet && getAsset(assets, toLower(nativeAssetAddress))) ||
@@ -154,6 +155,7 @@ const getAsset = (
 ) => find(assets, matchesProperty('address', toLower(address)));
 
 const getAssetPrice = (address: EthereumAddress = ETH_ADDRESS): number => {
+  // TODO JIN
   const { assets, genericAssets } = store.getState().data;
   const genericPrice = genericAssets[address]?.price?.value;
   return genericPrice || getAsset(assets, address)?.price?.value || 0;
@@ -192,6 +194,7 @@ const getBalanceAmount = (
   selectedGasFee: LegacySelectedGasFee,
   selected: ParsedAddressAsset
 ) => {
+  // TODO JIN
   const { assets } = store.getState().data;
   let amount =
     selected?.balance?.amount ??
@@ -512,6 +515,7 @@ async function parseEthereumUrl(data: string) {
   while (store.getState().data.isLoadingAssets) {
     await delay(300);
   }
+  // TODO JIN
   const { assets } = store.getState().data;
 
   if (!functionName) {

@@ -220,6 +220,7 @@ const addCashGetTransferHash = (
 ) => async (dispatch, getState) => {
   logger.log('[add cash] - watch for transfer hash');
   const { accountAddress, network } = getState().settings;
+  // TODO JIN
   const { assets } = getState().data;
   const getTransferHash = async (
     referenceInfo,

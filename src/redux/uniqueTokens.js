@@ -85,6 +85,7 @@ export const fetchUniqueTokens = showcaseAddress => async (
   }
   const { network } = getState().settings;
   const accountAddress = showcaseAddress || getState().settings.accountAddress;
+  // TODO JIN
   const { assets } = getState().data;
   const { uniqueTokens: existingUniqueTokens } = getState().uniqueTokens;
   const shouldUpdateInBatches = isEmpty(existingUniqueTokens);

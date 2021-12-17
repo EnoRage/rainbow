@@ -296,6 +296,7 @@ export const fetchOnchainBalances = ({
 }) => async (dispatch, getState) => {
   logger.log('😬 FallbackExplorer:: fetchOnchainBalances');
   const { network, accountAddress, nativeCurrency } = getState().settings;
+  // TODO JIN
   const { assets: allAssets, genericAssets } = getState().data;
   const { coingeckoIds } = getState().additionalAssetsData;
   const formattedNativeCurrency = toLower(nativeCurrency);
@@ -311,6 +312,7 @@ export const fetchOnchainBalances = ({
     genericAssets
   );
 
+  // TODO JIN
   const { assets: accountAssets } = getState().data;
   let assets =
     network === NetworkTypes.mainnet

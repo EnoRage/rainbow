@@ -454,6 +454,7 @@ const fetchAssetsFromRefraction = () => (_dispatch, getState) => {
 };
 
 const l2AddressAssetsReceived = (message, network) => (dispatch, getState) => {
+  // TODO JIN
   const { assets: allAssets, genericAssets } = getState().data;
 
   const newAssets = message?.payload?.assets?.map(asset => {

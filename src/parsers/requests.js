@@ -130,6 +130,7 @@ const getTransactionDisplayDetails = (
     };
   }
   if (transaction.data.startsWith(tokenTransferHash)) {
+    // TODO JIN: needs to be replaced
     const { assets } = store.getState().data;
     const contractAddress = transaction.to;
     const asset = ethereumUtils.getAsset(assets, contractAddress);
