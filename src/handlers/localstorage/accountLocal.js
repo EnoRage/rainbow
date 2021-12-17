@@ -1,17 +1,17 @@
 import { getAccountLocal, saveAccountLocal } from './common';
 
 const assetPricesFromUniswapVersion = '0.1.0';
-const assetsVersion = '0.2.0';
+const accountAssetsDataVersion = '0.1.0';
 const purchaseTransactionsVersion = '0.1.0';
 const savingsVersion = '0.2.0';
 const transactionsVersion = '0.2.5';
 const uniqueTokensVersion = '0.2.1';
 const accountEmptyVersion = '0.1.0';
 
+const ACCOUNT_ASSETS_DATA = 'accountAssetsData';
 const ACCOUNT_INFO = 'accountInfo';
 const ACCOUNT_EMPTY = 'accountEmpty';
 const ASSET_PRICES_FROM_UNISWAP = 'assetPricesFromUniswap';
-const ASSETS = 'assets';
 const PURCHASE_TRANSACTIONS = 'purchaseTransactions';
 const SAVINGS = 'savings';
 const SHOWCASE_TOKENS = 'showcaseTokens';
@@ -22,9 +22,9 @@ const HIDDEN_COINS = 'hiddenCoins';
 const WEB_DATA_ENABLED = 'webDataEnabled';
 
 export const accountLocalKeys = [
+  ACCOUNT_ASSETS_DATA,
   ACCOUNT_INFO,
   ASSET_PRICES_FROM_UNISWAP,
-  ASSETS,
   PURCHASE_TRANSACTIONS,
   SAVINGS,
   SHOWCASE_TOKENS,
@@ -84,22 +84,38 @@ export const saveAccountEmptyState = (val, accountAddress, network) =>
   );
 
 /**
- * @desc get assets
+ * @desc get account assets data
  * @param  {String}   [address]
  * @param  {String}   [network]
  * @return {Object}
  */
-export const getAssets = (accountAddress, network) =>
-  getAccountLocal(ASSETS, accountAddress, network, [], assetsVersion);
+export const getAccountAssetsData = (accountAddress, network) =>
+  getAccountLocal(
+    ACCOUNT_ASSETS_DATA,
+    accountAddress,
+    network,
+    {},
+    accountAssetsDataVersion
+  );
 
 /**
- * @desc save assets
- * @param  {Array}    [assets]
+ * @desc save account assets data
+ * @param  {Address -> Asset Data}   [accountAssetsData]
  * @param  {String}   [address]
  * @param  {String}   [network]
  */
-export const saveAssets = (assets, accountAddress, network) =>
-  saveAccountLocal(ASSETS, assets, accountAddress, network, assetsVersion);
+export const saveAccountAssetsData = (
+  accountAssetsData,
+  accountAddress,
+  network
+) =>
+  saveAccountLocal(
+    ACCOUNT_ASSETS_DATA,
+    accountAssetsData,
+    accountAddress,
+    network,
+    accountAssetsDataVersion
+  );
 
 /**
  * @desc get asset prices from Uniswap
