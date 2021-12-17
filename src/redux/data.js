@@ -14,8 +14,8 @@ import {
   mapKeys,
   mapValues,
   partition,
+  pickBy,
   property,
-  remove,
   toLower,
   toUpper,
   uniqBy,
@@ -41,7 +41,6 @@ import {
   TransactionTypes,
 } from '@rainbow-me/entities';
 import appEvents from '@rainbow-me/handlers/appEvents';
-import { isL2Asset } from '@rainbow-me/handlers/assets';
 import {
   getAccountAssetsData,
   getAssetPricesFromUniswap,
@@ -520,15 +519,16 @@ export const addressAssetsReceived = (
   const { accountAddress, network } = getState().settings;
   const { uniqueTokens } = getState().uniqueTokens;
   const payload = values(message?.payload?.assets ?? {});
-  let assets = filter(
+  let assets = pickBy(
     payload,
     asset =>
       asset?.asset?.type !== AssetTypes.compound &&
-      asset?.asset?.type !== AssetTypes.trash
+      asset?.asset?.type !== AssetTypes.trash &&
+      !shitcoins.includes(toLower(asset?.asset?.asset_code))
   );
 
   if (removed) {
-    assets = map(payload, asset => {
+    assets = mapValues(payload, asset => {
       return {
         ...asset,
         quantity: 0,
@@ -536,18 +536,18 @@ export const addressAssetsReceived = (
     });
   }
 
-  // Remove spammy tokens
-  remove(assets, asset =>
-    shitcoins.includes(toLower(asset?.asset?.asset_code))
-  );
-
   // TODO JIN - update this to a map and update all functions here
   let parsedAssets = parseAccountAssets(assets, uniqueTokens);
 
-  // remove V2 LP tokens
-  const liquidityTokens = remove(
+  const liquidityTokens = map(
     parsedAssets,
     asset => asset?.type === AssetTypes.uniswapV2
+  );
+
+  // remove V2 LP tokens
+  parsedAssets = pickBy(
+    parsedAssets,
+    asset => asset?.type !== AssetTypes.uniswapV2
   );
 
   const isL2 = assetsNetwork && isL2Network(assetsNetwork);
@@ -557,70 +557,54 @@ export const addressAssetsReceived = (
     );
   }
 
-  // TODO JIN
-  const { assets: existingAssets } = getState().data;
-  if (append || change || removed) {
-    parsedAssets = uniqBy(
-      concat(parsedAssets, existingAssets),
-      item => item.uniqueId
-    );
-  } else if (isL2) {
-    // We need to replace all the assets for that network completely
-    // TODO JIN
-    const { assets: existingAssets } = getState().data;
-    const restOfTheAssets = existingAssets.filter(
-      asset => asset.network !== assetsNetwork
-    );
-    parsedAssets = concat(parsedAssets, restOfTheAssets);
-    parsedAssets = uniqBy(parsedAssets, item => item.uniqueId);
-  } else {
-    // We need to merge the response with all l2 assets
-    // to prevent L2 assets temporarily dissapearing
-    // TODO JIN
-    const { assets: existingAssets } = getState().data;
-    const l2Assets = existingAssets.filter(asset => isL2Asset(asset.type));
-    parsedAssets = uniqBy(
-      network === networkTypes.mainnet
-        ? concat(parsedAssets, l2Assets)
-        : parsedAssets,
-      item => item.uniqueId
-    );
-  }
+  const { accountAssetsData: existingAccountAssetsData } = getState().data;
+  parsedAssets = {
+    ...existingAccountAssetsData,
+    ...parsedAssets,
+  };
 
-  parsedAssets = parsedAssets.filter(asset => !!Number(asset?.balance?.amount));
+  parsedAssets = pickBy(
+    parsedAssets,
+    asset => !!Number(asset?.balance?.amount)
+  );
 
   saveAccountAssetsData(parsedAssets, accountAddress, network);
-  if (parsedAssets.length > 0) {
+  if (!isEmpty(parsedAssets)) {
     // Change the state since the account isn't empty anymore
     saveAccountEmptyState(false, accountAddress, network);
   }
 
-  // TODO JIN - parsed assets needs to be a map
   dispatch({
     payload: parsedAssets,
     type: DATA_UPDATE_ACCOUNT_ASSETS_DATA,
   });
   if (!change) {
     const missingPriceAssetAddresses = map(
-      filter(parsedAssets, asset => isNil(asset.price)),
+      filter(parsedAssets, asset => isNil(asset?.price)),
       property('address')
     );
     dispatch(subscribeToMissingPrices(missingPriceAssetAddresses));
   }
 
   //Hide tokens with a url as their token name
-  const assetsWithScamURL = parsedAssets
-    .filter(asset => isValidDomain(asset.name) && !asset.isVerified)
-    .map(({ uniqueId }) => uniqueId);
+  const assetsWithScamURL = map(
+    filter(
+      parsedAssets,
+      asset => isValidDomain(asset.name) && !asset.isVerified
+    ),
+    property('uniqueId')
+  );
   addHiddenCoins(assetsWithScamURL, dispatch, accountAddress);
 
   // Hide coins with price = 0 that are currently not pinned
   if (isL2) {
-    const assetsWithNoPrice = parsedAssets
-      .filter(
+    const assetsWithNoPrice = map(
+      filter(
+        parsedAssets,
         asset => asset.price?.value === 0 && asset.network === assetsNetwork
-      )
-      .map(({ uniqueId }) => uniqueId);
+      ),
+      property('uniqueId')
+    );
     addHiddenCoins(assetsWithNoPrice, dispatch, accountAddress);
   }
 };
