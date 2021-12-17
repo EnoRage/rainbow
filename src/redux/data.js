@@ -43,12 +43,12 @@ import {
 import appEvents from '@rainbow-me/handlers/appEvents';
 import { isL2Asset } from '@rainbow-me/handlers/assets';
 import {
+  getAccountAssetsData,
   getAssetPricesFromUniswap,
-  getAssets,
   getLocalTransactions,
+  saveAccountAssetsData,
   saveAccountEmptyState,
   saveAssetPricesFromUniswap,
-  saveAssets,
   saveLocalTransactions,
 } from '@rainbow-me/handlers/localstorage/accountLocal';
 import {
@@ -114,7 +114,8 @@ export const COINGECKO_IDS_ENDPOINT =
 
 const DATA_UPDATE_ASSET_PRICES_FROM_UNISWAP =
   'data/DATA_UPDATE_ASSET_PRICES_FROM_UNISWAP';
-const DATA_UPDATE_ASSETS = 'data/DATA_UPDATE_ASSETS';
+const DATA_UPDATE_ACCOUNT_ASSETS_DATA = 'data/DATA_UPDATE_ACCOUNT_ASSETS_DATA';
+
 const DATA_UPDATE_GENERIC_ASSETS = 'data/DATA_UPDATE_GENERIC_ASSETS';
 const DATA_UPDATE_ETH_USD = 'data/DATA_UPDATE_ETH_USD';
 const DATA_UPDATE_ETH_USD_CHARTS = 'data/DATA_UPDATE_ETH_USD_CHARTS';
@@ -123,9 +124,12 @@ const DATA_UPDATE_TRANSACTIONS = 'data/DATA_UPDATE_TRANSACTIONS';
 const DATA_UPDATE_UNISWAP_PRICES_SUBSCRIPTION =
   'data/DATA_UPDATE_UNISWAP_PRICES_SUBSCRIPTION';
 
-const DATA_LOAD_ASSETS_REQUEST = 'data/DATA_LOAD_ASSETS_REQUEST';
-const DATA_LOAD_ASSETS_SUCCESS = 'data/DATA_LOAD_ASSETS_SUCCESS';
-const DATA_LOAD_ASSETS_FAILURE = 'data/DATA_LOAD_ASSETS_FAILURE';
+const DATA_LOAD_ACCOUNT_ASSETS_DATA_REQUEST =
+  'data/DATA_LOAD_ACCOUNT_ASSETS_DATA_REQUEST';
+const DATA_LOAD_ACCOUNT_ASSETS_DATA_SUCCESS =
+  'data/DATA_LOAD_ACCOUNT_ASSETS_DATA_SUCCESS';
+const DATA_LOAD_ACCOUNT_ASSETS_DATA_FAILURE =
+  'data/DATA_LOAD_ACCOUNT_ASSETS_DATA_FAILURE';
 
 const DATA_LOAD_ASSET_PRICES_FROM_UNISWAP_SUCCESS =
   'data/DATA_LOAD_ASSET_PRICES_FROM_UNISWAP_SUCCESS';
@@ -162,14 +166,17 @@ export const dataLoadState = () => async (dispatch, getState) =>
       // eslint-disable-next-line no-empty
     } catch (error) {}
     try {
-      dispatch({ type: DATA_LOAD_ASSETS_REQUEST });
-      const assets = await getAssets(accountAddress, network);
+      dispatch({ type: DATA_LOAD_ACCOUNT_ASSETS_DATA_REQUEST });
+      const accountAssetsData = await getAccountAssetsData(
+        accountAddress,
+        network
+      );
       dispatch({
-        payload: assets,
-        type: DATA_LOAD_ASSETS_SUCCESS,
+        payload: accountAssetsData,
+        type: DATA_LOAD_ACCOUNT_ASSETS_DATA_SUCCESS,
       });
     } catch (error) {
-      dispatch({ type: DATA_LOAD_ASSETS_FAILURE });
+      dispatch({ type: DATA_LOAD_ACCOUNT_ASSETS_DATA_FAILURE });
     }
     try {
       dispatch({ type: DATA_LOAD_TRANSACTIONS_REQUEST });
@@ -349,15 +356,16 @@ export const dataResetState = () => (dispatch, getState) => {
   dispatch({ type: DATA_CLEAR_STATE });
 };
 
+// TODO JIN - assets needs to be a map
 export const dataUpdateAssets = assets => (dispatch, getState) => {
   const { accountAddress, network } = getState().settings;
   if (assets.length) {
-    saveAssets(assets, accountAddress, network);
+    saveAccountAssetsData(assets, accountAddress, network);
     // Change the state since the account isn't empty anymore
     saveAccountEmptyState(false, accountAddress, network);
     dispatch({
       payload: assets,
-      type: DATA_UPDATE_ASSETS,
+      type: DATA_UPDATE_ACCOUNT_ASSETS_DATA,
     });
   }
 };
@@ -534,6 +542,7 @@ export const addressAssetsReceived = (
     shitcoins.includes(toLower(asset?.asset?.asset_code))
   );
 
+  // TODO JIN - update this to a map and update all functions here
   let parsedAssets = parseAccountAssets(assets, uniqueTokens);
 
   // remove V2 LP tokens
@@ -578,15 +587,16 @@ export const addressAssetsReceived = (
 
   parsedAssets = parsedAssets.filter(asset => !!Number(asset?.balance?.amount));
 
-  saveAssets(parsedAssets, accountAddress, network);
+  saveAccountAssetsData(parsedAssets, accountAddress, network);
   if (parsedAssets.length > 0) {
     // Change the state since the account isn't empty anymore
     saveAccountEmptyState(false, accountAddress, network);
   }
 
+  // TODO JIN - parsed assets needs to be a map
   dispatch({
     payload: parsedAssets,
-    type: DATA_UPDATE_ASSETS,
+    type: DATA_UPDATE_ACCOUNT_ASSETS_DATA,
   });
   if (!change) {
     const missingPriceAssetAddresses = map(
@@ -1044,7 +1054,9 @@ export const updateRefetchSavings = fetch => dispatch =>
 
 // -- Reducer ----------------------------------------- //
 const INITIAL_STATE = {
+  accountAssetsData: {}, // for account-specific assets
   assetPricesFromUniswap: {},
+  // TODO JIN: remove below
   assets: [], // for account-specific assets
   ethUSDCharts: null,
   ethUSDPrice: null,
@@ -1076,8 +1088,12 @@ export default (state = INITIAL_STATE, action) => {
       return { ...state, assetPricesFromUniswap: action.payload };
     case DATA_UPDATE_GENERIC_ASSETS:
       return { ...state, genericAssets: action.payload };
-    case DATA_UPDATE_ASSETS:
-      return { ...state, assets: action.payload, isLoadingAssets: false };
+    case DATA_UPDATE_ACCOUNT_ASSETS_DATA:
+      return {
+        ...state,
+        accountAssetsData: action.payload,
+        isLoadingAssets: false,
+      };
     case DATA_UPDATE_TRANSACTIONS:
       return {
         ...state,
@@ -1115,7 +1131,7 @@ export default (state = INITIAL_STATE, action) => {
         ...state,
         isLoadingTransactions: false,
       };
-    case DATA_LOAD_ASSETS_REQUEST:
+    case DATA_LOAD_ACCOUNT_ASSETS_DATA_REQUEST:
       return {
         ...state,
         isLoadingAssets: true,
@@ -1125,13 +1141,13 @@ export default (state = INITIAL_STATE, action) => {
         ...state,
         assetPricesFromUniswap: action.payload,
       };
-    case DATA_LOAD_ASSETS_SUCCESS:
+    case DATA_LOAD_ACCOUNT_ASSETS_DATA_SUCCESS:
       return {
         ...state,
-        assets: action.payload,
+        accountAssetsData: action.payload,
         isLoadingAssets: false,
       };
-    case DATA_LOAD_ASSETS_FAILURE:
+    case DATA_LOAD_ACCOUNT_ASSETS_DATA_FAILURE:
       return {
         ...state,
         isLoadingAssets: false,
